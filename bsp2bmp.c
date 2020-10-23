@@ -56,12 +56,12 @@ int	 quiet;
 
 /* Data structs */
 typedef struct dentry_t {
-	long		offset;
-	long		size;
+	int32_t		offset;
+	int32_t		size;
 } dentry_t;
 
 typedef struct dheader_t {
-	long version;
+	int32_t version;
 	dentry_t	entities;
 	dentry_t	planes;
 
@@ -104,7 +104,7 @@ typedef struct face_t {
 	unsigned short	plane_id;
 
 	unsigned short	side;
-	long		ledge_id;
+	int32_t		ledge_id;
 
 	unsigned short	ledge_num;
 	unsigned short	texinfo_id;
@@ -112,13 +112,13 @@ typedef struct face_t {
 	unsigned char	typelight;
 	unsigned char	baselight;
 	unsigned char	light[2];
-	long		lightmap;
+	int32_t		lightmap;
 } face_t;
 
 /* MW */
 typedef struct edge_extra_t {
-	long		num_face_ref;
-	long		ref_faces[MAX_REF_FACES]; /* which faces ref'd */
+	int32_t		num_face_ref;
+	int32_t		ref_faces[MAX_REF_FACES]; /* which faces ref'd */
 	vertex_t	ref_faces_normal[MAX_REF_FACES]; /* normal of faces */
 	int		ref_faces_area[MAX_REF_FACES]; /* area of faces */
 } edge_extra_t;
@@ -150,25 +150,25 @@ typedef struct options_t {
 } options_t;
 
 typedef struct bmp_infoheader_t {
-	long		headersize;
-	long		imagewidth;
-	long		imageheight;
+	int32_t		headersize;
+	int32_t		imagewidth;
+	int32_t		imageheight;
 	unsigned short	planes;
 	unsigned short	bitcount;
-	long		compression;
-	long		datasize;
-	long		xpelspermeter;
-	long		ypelspermeter;
-	long		colsused;
-	long		colsimportant;
+	int32_t		compression;
+	int32_t		datasize;
+	int32_t		xpelspermeter;
+	int32_t		ypelspermeter;
+	int32_t		colsused;
+	int32_t		colsimportant;
 } bmp_infoheader_t;
 
 typedef struct bmp_fileheader_t {
 	eightbit	filetype[2];
-	long		filesize;    /* 4     : 4 */
+	int32_t		filesize;    /* 4     : 4 */
 	unsigned short	unused1;     /* 2 x 2 : 4 */
 	unsigned short	unused2;     /* 2 x 2 : 4 */
-	long		data_ofs;    /* 4     : 4 */
+	int32_t		data_ofs;    /* 4     : 4 */
 } bmp_fileheader_t;
 
 typedef struct rgb_quad_t {
@@ -226,7 +226,7 @@ void show_help() {
 
 /*---------------------------------------------------------------------------*/
 
-void plotpoint(eightbit *image, long width, long height, long xco, long yco, unsigned int color) {
+void plotpoint(eightbit *image, int32_t width, int32_t height, int32_t xco, int32_t yco, unsigned int color) {
 	unsigned int bigcol=0;
 
 	if(xco < 0 || xco > width || yco < 0 || yco > height)
@@ -248,11 +248,11 @@ void plotpoint(eightbit *image, long width, long height, long xco, long yco, uns
 
 /*---------------------------------------------------------------------------*/
 
-void bresline(eightbit *image, long width, long height, long x1, long y1, long x2, long y2, unsigned int color) {
-	long x=0, y=0;
-	long deltax=0, deltay=0;
-	long xchange=0, ychange=0;
-	long error, length, i;
+void bresline(eightbit *image, int32_t width, int32_t height, int32_t x1, int32_t y1, int32_t x2, int32_t y2, unsigned int color) {
+	int32_t x=0, y=0;
+	int32_t deltax=0, deltay=0;
+	int32_t xchange=0, ychange=0;
+	int32_t error, length, i;
 
 	x=x1;
 	y=y1;
@@ -342,7 +342,7 @@ void get_options(struct options_t *opt, int argc, char *argv[]) {
 	static struct options_t	 locopt;
 	int			 i=0;
 	char			*arg;
-	long			 lnum=0;
+	int32_t			 lnum=0;
 	float			 fnum=0.0;
 	char			 pm='+', axis='Z';
 
@@ -362,25 +362,31 @@ void get_options(struct options_t *opt, int argc, char *argv[]) {
 					break;
 				
 				case 's':
-					if(sscanf(&arg[2],"%ld",&lnum) == 1)
+					if(sscanf(&arg[2],"%d",&lnum) == 1)
 						if (lnum > 0)
 							locopt.scaledown = (float)lnum;
 					break;
 
 				case 'z':
-					if(sscanf(&arg[2],"%ld",&lnum) == 1)
+					if(sscanf(&arg[2],"%d",&lnum) == 1)
 						if (lnum >= -1)
 							locopt.z_pad = (float)lnum;
 					break;
 
 				case 'p':
-					if(sscanf(&arg[2],"%ld",&lnum) == 1)
-						if (lnum >= 0)
+					if(sscanf(&arg[2],"%d",&lnum) == 1) {
+						//minimum border of 1px to prevent line intersection bleed from disappearing/overflowing
+						if (lnum == 0) {
+							locopt.image_pad = 1;
+						}
+						else if (lnum >= 1) {
 							locopt.image_pad = (float)lnum;
+						}
+					}
 					break;
 				
 				case 'd':
-					if(sscanf(&arg[2],"%ld",&lnum) == 1)
+					if(sscanf(&arg[2],"%d",&lnum) == 1)
 						if (lnum >= 0 && lnum <= 7)
 							locopt.z_direction = (int)lnum;
 					break;
@@ -446,13 +452,13 @@ void get_options(struct options_t *opt, int argc, char *argv[]) {
 					break;
 				
 				case 'a':
-					if(sscanf(&arg[2],"%ld",&lnum) == 1)
+					if(sscanf(&arg[2],"%d",&lnum) == 1)
 						if (lnum >= 0)
 							locopt.area_threshold = (int)lnum;
 					break;
 				
 				case 'l':
-					if(sscanf(&arg[2],"%ld",&lnum) == 1)
+					if(sscanf(&arg[2],"%d",&lnum) == 1)
 						if (lnum >= 0)
 							locopt.linelen_threshold = (int)lnum;
 					break;
@@ -581,8 +587,8 @@ void show_options(struct options_t *opt)
 int main(int argc, char *argv[]) {
 	FILE                 *bspfile=NULL;
 	FILE                 *outfile=NULL;
-	long                  i=0, j=0, k=0, x=0;
-	long                  pad=0x00000000;
+	int32_t                  i=0, j=0, k=0, x=0;
+	int32_t                  pad=0x00000000;
 	struct dheader_t      bsp_header;
 
 	struct vertex_t      *vertexlist=NULL;
@@ -595,16 +601,16 @@ int main(int argc, char *argv[]) {
 	struct vertex_t       v0, v1, vect;
 	int                   area, usearea;
 
-	long                  numedges=0;
-	long                  numlistedges=0;
-	long                  numvertices=0;
-	long                  numfaces=0;
+	int32_t                  numedges=0;
+	int32_t                  numlistedges=0;
+	int32_t                  numvertices=0;
+	int32_t                  numfaces=0;
 
 	float                 minX=0.0, maxX=0.0, minY=0.0, maxY=0.0, minZ=0.0, maxZ=0.0, midZ=0.0, tempf=0.0;
-	long                  Zoffset0=0, Zoffset1=0;
-	long                  Z_Xdir=1, Z_Ydir=-1;
+	int32_t                  Zoffset0=0, Zoffset1=0;
+	int32_t                  Z_Xdir=1, Z_Ydir=-1;
 
-	long                  imagewidth=0,imageheight=0;
+	int32_t                  imagewidth=0,imageheight=0;
 
 	eightbit             *image;
 	struct options_t      options;
@@ -648,52 +654,52 @@ int main(int argc, char *argv[]) {
 	i = fread(&bsp_header, sizeof(struct dheader_t), 1, bspfile);
 	*/
 	i = 0;
-	i = i + fread(&bsp_header.version, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.version, sizeof(int32_t), 1, bspfile);
 	/* entities: */
-	i = i + fread(&bsp_header.entities.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.entities.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.entities.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.entities.size, sizeof(int32_t), 1, bspfile);
 	/* planes: */
-	i = i + fread(&bsp_header.planes.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.planes.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.planes.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.planes.size, sizeof(int32_t), 1, bspfile);
 	/* miptex: */
-	i = i + fread(&bsp_header.miptex.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.miptex.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.miptex.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.miptex.size, sizeof(int32_t), 1, bspfile);
 	/* vertices: */
-	i = i + fread(&bsp_header.vertices.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.vertices.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.vertices.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.vertices.size, sizeof(int32_t), 1, bspfile);
 	/* visilist: */
-	i = i + fread(&bsp_header.visilist.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.visilist.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.visilist.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.visilist.size, sizeof(int32_t), 1, bspfile);
 	/* nodes: */
-	i = i + fread(&bsp_header.nodes.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.nodes.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.nodes.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.nodes.size, sizeof(int32_t), 1, bspfile);
 	/* texinfo: */
-	i = i + fread(&bsp_header.texinfo.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.texinfo.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.texinfo.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.texinfo.size, sizeof(int32_t), 1, bspfile);
 	/* faces: */
-	i = i + fread(&bsp_header.faces.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.faces.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.faces.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.faces.size, sizeof(int32_t), 1, bspfile);
 	/* lightmaps: */
-	i = i + fread(&bsp_header.lightmaps.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.lightmaps.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.lightmaps.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.lightmaps.size, sizeof(int32_t), 1, bspfile);
 	/* clipnodes: */
-	i = i + fread(&bsp_header.clipnodes.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.clipnodes.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.clipnodes.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.clipnodes.size, sizeof(int32_t), 1, bspfile);
 	/* leaves: */
-	i = i + fread(&bsp_header.leaves.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.leaves.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.leaves.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.leaves.size, sizeof(int32_t), 1, bspfile);
 	/* iface: */
-	i = i + fread(&bsp_header.iface.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.iface.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.iface.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.iface.size, sizeof(int32_t), 1, bspfile);
 	/* edges: */
-	i = i + fread(&bsp_header.edges.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.edges.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.edges.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.edges.size, sizeof(int32_t), 1, bspfile);
 	/* ledges: */
-	i = i + fread(&bsp_header.ledges.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.ledges.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.ledges.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.ledges.size, sizeof(int32_t), 1, bspfile);
 	/* models: */
-	i = i + fread(&bsp_header.models.offset, sizeof(long), 1, bspfile);
-	i = i + fread(&bsp_header.models.size, sizeof(long), 1, bspfile);
+	i = i + fread(&bsp_header.models.offset, sizeof(int32_t), 1, bspfile);
+	i = i + fread(&bsp_header.models.size, sizeof(int32_t), 1, bspfile);
 
 	if (i != 31) {
 		stdprintf("error %s!\n",strerror(errno));
@@ -733,13 +739,13 @@ int main(int argc, char *argv[]) {
 	/* Read vertices -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -   */
 	vertexlist = malloc(sizeof(struct vertex_t) * numvertices);
 	if (vertexlist == NULL) {
-		fprintf(stderr,"Error allocating %ld bytes for vertices.",sizeof(struct vertex_t) * numvertices);
+		fprintf(stderr,"Error allocating %ld bytes for vertices.\n",sizeof(struct vertex_t) * numvertices);
 		return 2;
 	}
 
 	stdprintf("Reading %ld vertices...",numvertices);
 	if (fseek(bspfile,bsp_header.vertices.offset,SEEK_SET)) {
-		fprintf(stderr, "error seeking to %ld\n",bsp_header.vertices.offset);
+		fprintf(stderr, "error seeking to %d\n",bsp_header.vertices.offset);
 		return 1;
 	} else {
 		stdprintf("seek to %ld...",ftell(bspfile));
@@ -758,7 +764,7 @@ int main(int argc, char *argv[]) {
 		i++;
 	}
 	if (i != numvertices) {
-		fprintf(stderr, "error %s! only %ld read.\n",strerror(errno),i);
+		fprintf(stderr, "error %s! only %d read.\n",strerror(errno),i);
 		return 1;
 	} else {
 		stdprintf("successfully read %ld vertices.\n",i);
@@ -767,13 +773,13 @@ int main(int argc, char *argv[]) {
 	/* Read edges -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -   */
 	edgelist = malloc(sizeof(struct edge_t) * numedges);
 	if (edgelist == NULL) {
-		fprintf(stderr,"Error allocating %ld bytes for edges.",sizeof(struct edge_t) * numedges);
+		fprintf(stderr,"Error allocating %ld bytes for edges.\n",sizeof(struct edge_t) * numedges);
 		return 2;
 	}
 
 	stdprintf( "Reading %ld edges...",numedges);
 	if (fseek(bspfile,bsp_header.edges.offset,SEEK_SET)) {
-		fprintf(stderr,"error seeking to %ld\n",bsp_header.vertices.offset);
+		fprintf(stderr,"error seeking to %d\n",bsp_header.vertices.offset);
 		return 1;
 	} else {
 		stdprintf("seek to %ld...",ftell(bspfile));
@@ -791,7 +797,7 @@ int main(int argc, char *argv[]) {
 		i++;
 	}
 	if (i != numedges) {
-		fprintf(stderr, "error %s! only %ld read.\n",strerror(errno),i);
+		fprintf(stderr, "error %s! only %d read.\n",strerror(errno),i);
 		return 1;
 	} else {
 		stdprintf("successfully read %ld edges.\n",i);
@@ -800,20 +806,20 @@ int main(int argc, char *argv[]) {
 	/* Read ledges   -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -   */
 	ledges = malloc(sizeof(short) * numlistedges);
 	if (ledges == NULL) {
-		fprintf(stderr,"Error allocating %ld bytes for ledges.",sizeof(short) * numlistedges);
+		fprintf(stderr,"Error allocating %ld bytes for ledges.\n",sizeof(short) * numlistedges);
 		return 2;
 	}
 
 	stdprintf("Reading ledges...");
 	if (fseek(bspfile,bsp_header.ledges.offset,SEEK_SET)) {
-		fprintf(stderr, "error seeking to %ld\n",bsp_header.ledges.offset);
+		fprintf(stderr, "error seeking to %d\n",bsp_header.ledges.offset);
 		return 1;
 	} else {
 		stdprintf("seek to %ld...",ftell(bspfile));
 	}
 	i=fread(ledges,sizeof(short),numlistedges,bspfile);
 	if (i != numlistedges) {
-		fprintf(stderr, "error %s! only %ld read.\n",strerror(errno),i);
+		fprintf(stderr, "error %s! only %d read.\n",strerror(errno),i);
 		return 1;
 	} else {
 		stdprintf("successfully read %ld ledges.\n",i);
@@ -822,13 +828,13 @@ int main(int argc, char *argv[]) {
 	/* Read faces -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -   */
 	facelist = malloc(sizeof(struct face_t) * numfaces);
 	if (facelist == NULL) {
-		fprintf(stderr,"Error allocating %ld bytes for faces.",sizeof(short) * numfaces);
+		fprintf(stderr,"Error allocating %ld bytes for faces.\n",sizeof(short) * numfaces);
 		return 2;
 	}
 
 	stdprintf("Reading faces...");
 	if (fseek(bspfile,bsp_header.faces.offset,SEEK_SET)) {
-		fprintf(stderr, "error seeking to %ld\n",bsp_header.faces.offset);
+		fprintf(stderr, "error seeking to %d\n",bsp_header.faces.offset);
 		return 1;
 	} else {
 		stdprintf("seek to %ld...",ftell(bspfile));
@@ -841,20 +847,20 @@ int main(int argc, char *argv[]) {
 		j = 0;
 		j = j + fread(&(facelist[i].plane_id),sizeof(unsigned short), 1, bspfile);
 		j = j + fread(&(facelist[i].side),sizeof(unsigned short), 1, bspfile);
-		j = j + fread(&(facelist[i].ledge_id),sizeof(long), 1, bspfile);
+		j = j + fread(&(facelist[i].ledge_id),sizeof(int32_t), 1, bspfile);
 		j = j + fread(&(facelist[i].ledge_num),sizeof(unsigned short), 1, bspfile);
 		j = j + fread(&(facelist[i].texinfo_id),sizeof(unsigned short), 1, bspfile);
 		j = j + fread(&(facelist[i].typelight),sizeof(unsigned char), 1, bspfile);
 		j = j + fread(&(facelist[i].baselight),sizeof(unsigned char), 1, bspfile);
 		j = j + fread(&(facelist[i].light[0]),sizeof(unsigned char), 1, bspfile);
 		j = j + fread(&(facelist[i].light[1]),sizeof(unsigned char), 1, bspfile);
-		j = j + fread(&(facelist[i].lightmap),sizeof(long), 1, bspfile);
+		j = j + fread(&(facelist[i].lightmap),sizeof(int32_t), 1, bspfile);
 		if (j < 10)
 			break;
 		i++;
 	}
 	if (i != numfaces) {
-		fprintf(stderr, "error %s! only %ld read.\n",strerror(errno),i);
+		fprintf(stderr, "error %s! only %d read.\n",strerror(errno),i);
 		return 1;
 	} else {
 		stdprintf("successfully read %ld faces.\n",i);
@@ -1045,11 +1051,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-minX = minY = minZ = -4096;
-maxX = maxY = maxZ = 4096;
-	
 	if (options.z_pad == -1)
-		options.z_pad = (long)(maxZ - minZ) / (options.scaledown * Z_PAD_HACK);
+		options.z_pad = (int32_t)(maxZ - minZ) / (options.scaledown * Z_PAD_HACK);
 
 	midZ=(maxZ + minZ) / 2.0;
 	stdprintf("\n");
@@ -1057,14 +1060,19 @@ maxX = maxY = maxZ = 4096;
 	stdprintf("        Y [%8.4f .. %8.4f] delta: %8.4f\n",minY,maxY,(maxY-minY));
 	stdprintf("        Z [%8.4f .. %8.4f] delta: %8.4f - mid: %8.4f\n",minZ,maxZ,(maxZ-minZ),midZ);
 
+//should you want to have the image centered in a huge void...
+/*minX = minY = minZ = -4096;
+maxX = maxY = maxZ = 4096;*/
+
 	/* image array */
-	imagewidth  = (long)((maxX - minX)/options.scaledown) + (options.image_pad*2) + (options.z_pad*2);
-	imageheight = (long)((maxY - minY)/options.scaledown) + (options.image_pad*2) + (options.z_pad*2);
+	//extra padding to prevent line intersection bleed from being cutoff with -p0
+	imagewidth  = (int32_t)((maxX - minX)/options.scaledown) + (options.image_pad*2) + 1 + (options.z_pad*2);
+	imageheight = (int32_t)((maxY - minY)/options.scaledown) + (options.image_pad*2) + 1 + (options.z_pad*2);
 	if(!(image=malloc(sizeof(eightbit) * imagewidth * imageheight))) {
-		fprintf(stderr,"Error allocating image buffer %ldx%ld.\n",imagewidth,imageheight);
+		fprintf(stderr,"Error allocating image buffer %dx%d.\n",imagewidth,imageheight);
 		return 0;
 	} else {
-		stdprintf("Allocated buffer %ldx%ld for image.\n",imagewidth,imageheight);
+		stdprintf("Allocated buffer %dx%d for image.\n",imagewidth,imageheight);
 		memset(image,0,sizeof(eightbit) * imagewidth * imageheight);
 	}
 
@@ -1182,14 +1190,14 @@ maxX = maxY = maxZ = 4096;
 		    (vertexlist[edgelist[i].vertex0].Y - vertexlist[edgelist[i].vertex1].Y) +
 		    (vertexlist[edgelist[i].vertex0].Z - vertexlist[edgelist[i].vertex1].Z) *
 		    (vertexlist[edgelist[i].vertex0].Z - vertexlist[edgelist[i].vertex1].Z)) > options.linelen_threshold)) {
-			Zoffset0=(long)(options.z_pad * (vertexlist[edgelist[i].vertex0].Z - midZ) / (maxZ - minZ));
-			Zoffset1=(long)(options.z_pad * (vertexlist[edgelist[i].vertex1].Z - midZ) / (maxZ - minZ));
+			Zoffset0=(int32_t)(options.z_pad * (vertexlist[edgelist[i].vertex0].Z - midZ) / (maxZ - minZ));
+			Zoffset1=(int32_t)(options.z_pad * (vertexlist[edgelist[i].vertex1].Z - midZ) / (maxZ - minZ));
 			
 			bresline(image, imagewidth, imageheight,
-			         (long)((vertexlist[edgelist[i].vertex0].X - minX)/options.scaledown + options.image_pad + options.z_pad + (float)(Zoffset0 * Z_Xdir)),
-				 (long)((vertexlist[edgelist[i].vertex0].Y - minY)/options.scaledown + options.image_pad + options.z_pad + (float)(Zoffset0 * Z_Ydir)),
-				 (long)((vertexlist[edgelist[i].vertex1].X - minX)/options.scaledown + options.image_pad + options.z_pad + (float)(Zoffset1 * Z_Xdir)),
-				 (long)((vertexlist[edgelist[i].vertex1].Y - minY)/options.scaledown + options.image_pad + options.z_pad + (float)(Zoffset1 * Z_Ydir)),
+			         (int32_t)((vertexlist[edgelist[i].vertex0].X - minX)/options.scaledown + options.image_pad + options.z_pad + (float)(Zoffset0 * Z_Xdir)),
+				 (int32_t)((vertexlist[edgelist[i].vertex0].Y - minY)/options.scaledown + options.image_pad + options.z_pad + (float)(Zoffset0 * Z_Ydir)),
+				 (int32_t)((vertexlist[edgelist[i].vertex1].X - minX)/options.scaledown + options.image_pad + options.z_pad + (float)(Zoffset1 * Z_Xdir)),
+				 (int32_t)((vertexlist[edgelist[i].vertex1].Y - minY)/options.scaledown + options.image_pad + options.z_pad + (float)(Zoffset1 * Z_Ydir)),
 				 drawcol);
 		} else {
 			k++;
@@ -1247,28 +1255,28 @@ maxX = maxY = maxZ = 4096;
 
 		bmpfileheader.filetype[0]=(eightbit)0x42;
 		bmpfileheader.filetype[1]=(eightbit)0x4d;
-		bmpfileheader.filesize=(long)sizeof(eightbit) * (long)imagewidth * (long)imageheight + (long)1024 + (long)54;
+		bmpfileheader.filesize=(int32_t)sizeof(eightbit) * (int32_t)imagewidth * (int32_t)imageheight + (int32_t)1024 + (int32_t)54;
 		bmpfileheader.unused1=(unsigned short)0x0000;
 		bmpfileheader.unused2=(unsigned short)0x0000;
-		bmpfileheader.data_ofs=(long)(1024 + 54);
+		bmpfileheader.data_ofs=(int32_t)(1024 + 54);
 		
 		// stdprintf("bfh.fs=%ld\n",bmpfileheader.filesize);
-		// stdprintf("sizesum = %d\n",sizeof(unsigned short) + sizeof(long) + sizeof(unsigned short) + sizeof(unsigned short) + sizeof(long));
+		// stdprintf("sizesum = %d\n",sizeof(unsigned short) + sizeof(int32_t) + sizeof(unsigned short) + sizeof(unsigned short) + sizeof(int32_t));
 
-		bmpinfoheader.headersize=(long)40; /* 0x28 */
-		bmpinfoheader.imagewidth=(long)imagewidth;
-		bmpinfoheader.imageheight=(long)imageheight;
+		bmpinfoheader.headersize=(int32_t)40; /* 0x28 */
+		bmpinfoheader.imagewidth=(int32_t)imagewidth;
+		bmpinfoheader.imageheight=(int32_t)imageheight;
 		bmpinfoheader.planes=(unsigned short)01;
 		bmpinfoheader.bitcount=(unsigned short)8; /* 8-bits, 256-color image */
-		bmpinfoheader.compression=(long)0x00000000; /* No compression */
-		//bmpinfoheader.datasize=(long)(sizeof(eightbit) * imagewidth * imageheight); /* Could put 0, since its valid for uncompressed image */
-		bmpinfoheader.datasize=(long)0x00000000;
-		bmpinfoheader.xpelspermeter=(long)0x00006338; /* Arbitrary 100dpi */
-		bmpinfoheader.ypelspermeter=(long)0x00006338;
-		bmpinfoheader.xpelspermeter=(long)0x00000b6d; /* ImageMagick value :) */
-		bmpinfoheader.ypelspermeter=(long)0x00000b6d;
-		bmpinfoheader.colsused=(long)0x00000100; /* 256 colors */
-		bmpinfoheader.colsimportant=(long)0x00000100;
+		bmpinfoheader.compression=(int32_t)0x00000000; /* No compression */
+		//bmpinfoheader.datasize=(int32_t)(sizeof(eightbit) * imagewidth * imageheight); /* Could put 0, since its valid for uncompressed image */
+		bmpinfoheader.datasize=(int32_t)0x00000000;
+		bmpinfoheader.xpelspermeter=(int32_t)0x00006338; /* Arbitrary 100dpi */
+		bmpinfoheader.ypelspermeter=(int32_t)0x00006338;
+		bmpinfoheader.xpelspermeter=(int32_t)0x00000b6d; /* ImageMagick value :) */
+		bmpinfoheader.ypelspermeter=(int32_t)0x00000b6d;
+		bmpinfoheader.colsused=(int32_t)0x00000100; /* 256 colors */
+		bmpinfoheader.colsimportant=(int32_t)0x00000100;
 		// stdprintf("sizeof(bfh_t) = %d\n",sizeof(bmp_fileheader_t));
 		// stdprintf("sizeof(bih_t) = %d\n",sizeof(bmp_infoheader_t));
 
@@ -1278,10 +1286,10 @@ maxX = maxY = maxZ = 4096;
 		i = 0;
 		i = i + fwrite(&(bmpfileheader.filetype[0]), sizeof(eightbit),1,outfile);
 		i = i + fwrite(&(bmpfileheader.filetype[1]), sizeof(eightbit),1,outfile);
-		i = i + fwrite(&bmpfileheader.filesize, sizeof(long),1,outfile);
+		i = i + fwrite(&bmpfileheader.filesize, sizeof(int32_t),1,outfile);
 		i = i + fwrite(&bmpfileheader.unused1, sizeof(unsigned short),1,outfile);
 		i = i + fwrite(&bmpfileheader.unused2, sizeof(unsigned short),1,outfile);
-		i = i + fwrite(&bmpfileheader.data_ofs, sizeof(long),1,outfile);
+		i = i + fwrite(&bmpfileheader.data_ofs, sizeof(int32_t),1,outfile);
 		if (i != 6) {
 			fprintf(stderr,"Error writing bmp file header.\n");
 			return 1;
@@ -1291,17 +1299,17 @@ maxX = maxY = maxZ = 4096;
 		i=fwrite(&bmpinfoheader,sizeof(bmp_infoheader_t),1,outfile);
 		*/
 		i = 0;
-		i = i + fwrite(&bmpinfoheader.headersize,sizeof(long),1,outfile);
-		i = i + fwrite(&bmpinfoheader.imagewidth,sizeof(long),1,outfile);
-		i = i + fwrite(&bmpinfoheader.imageheight,sizeof(long),1,outfile);
+		i = i + fwrite(&bmpinfoheader.headersize,sizeof(int32_t),1,outfile);
+		i = i + fwrite(&bmpinfoheader.imagewidth,sizeof(int32_t),1,outfile);
+		i = i + fwrite(&bmpinfoheader.imageheight,sizeof(int32_t),1,outfile);
 		i = i + fwrite(&bmpinfoheader.planes,sizeof(unsigned short),1,outfile);
 		i = i + fwrite(&bmpinfoheader.bitcount,sizeof(unsigned short),1,outfile);
-		i = i + fwrite(&bmpinfoheader.compression,sizeof(long),1,outfile);
-		i = i + fwrite(&bmpinfoheader.datasize,sizeof(long),1,outfile);
-		i = i + fwrite(&bmpinfoheader.xpelspermeter,sizeof(long),1,outfile);
-		i = i + fwrite(&bmpinfoheader.ypelspermeter,sizeof(long),1,outfile);
-		i = i + fwrite(&bmpinfoheader.colsused,sizeof(long),1,outfile);
-		i = i + fwrite(&bmpinfoheader.colsimportant,sizeof(long),1,outfile);
+		i = i + fwrite(&bmpinfoheader.compression,sizeof(int32_t),1,outfile);
+		i = i + fwrite(&bmpinfoheader.datasize,sizeof(int32_t),1,outfile);
+		i = i + fwrite(&bmpinfoheader.xpelspermeter,sizeof(int32_t),1,outfile);
+		i = i + fwrite(&bmpinfoheader.ypelspermeter,sizeof(int32_t),1,outfile);
+		i = i + fwrite(&bmpinfoheader.colsused,sizeof(int32_t),1,outfile);
+		i = i + fwrite(&bmpinfoheader.colsimportant,sizeof(int32_t),1,outfile);
 		if (i != 11) {
 			fprintf(stderr,"Error writing bmp info header.\n");
 			return 1;
@@ -1329,19 +1337,19 @@ maxX = maxY = maxZ = 4096;
 		// if (options.write_nocomp)
 		if (1) {
 			/* K is the amount to pad by */
-			k = sizeof(long) - ((sizeof(eightbit) * imagewidth) % sizeof(long));
-			k = (k == sizeof(long)) ? 0 : k;
+			k = sizeof(int32_t) - ((sizeof(eightbit) * imagewidth) % sizeof(int32_t));
+			k = (k == sizeof(int32_t)) ? 0 : k;
 			for (j=1; j<=imageheight; j++) {
 				// Set of data: image[(int)((imageheight-j)*imagewidth)];  size = sizeof(eightbit) * (imagewidth)
 				i=fwrite(&image[(int)((imageheight-j)*imagewidth)], sizeof(eightbit) * (imagewidth), 1, outfile);
 				if (i != 1) {
-					fprintf(stderr,"Error writing bmp data to %s at line %ld\n",options.outf_name,j);
+					fprintf(stderr,"Error writing bmp data to %s at line %d\n",options.outf_name,j);
 					return 1;
 				}
 
 				if (k > 0) {
 					if(fwrite(&pad,k,1,outfile) != 1) {
-						fprintf(stderr,"Error writing bmp data padding to %s at line %ld\n",options.outf_name,j);
+						fprintf(stderr,"Error writing bmp data padding to %s at line %d\n",options.outf_name,j);
 						return 1;
 					}
 				}

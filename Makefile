@@ -9,8 +9,8 @@ ARCS = CHANGELOG COPYING INSTALL README Makefile $(SRCS)
 ARCDIR := $(shell basename $$PWD)
 
 #OFLAGS = -Wall -fpack-struct
-OFLAGS = -Wall -fpack-struct -m32
-LFLAGS = -s -lm -m32
+OFLAGS = -Wall -fpack-struct
+LFLAGS = -s -lm
 
 .PHONY: all msg
 .SUFFIXES: .o .c
