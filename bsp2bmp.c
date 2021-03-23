@@ -23,11 +23,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#ifdef WINVS
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 #include <errno.h>
 #include <string.h>
 #include <math.h>
+#ifdef WINVS
+#include <limits.h>
+#else
 #include <values.h>
+#endif
 #include <stdint.h>
 
 #define PROGNAME  "bsp2bmp"
@@ -636,8 +644,8 @@ int main(int argc, char *argv[]) {
     /* Create Output file name if it is not provided */
     if(options.outf_name ==  NULL)
     {
-        options.outf_name=malloc(strlen(options.bspf_name)+1);
-        strncpy (options.outf_name, options.bspf_name,strlen(options.bspf_name)-3);
+		options.outf_name=calloc(sizeof(options.bspf_name), sizeof(options.bspf_name));
+        strncpy(options.outf_name, options.bspf_name,strlen(options.bspf_name)-3);
         strcat(options.outf_name,"bmp");
         fprintf(stdout,"Assuming BMP name from BSP name: %s\n",options.outf_name);
     }
