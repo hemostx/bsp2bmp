@@ -669,6 +669,12 @@ int main(int argc, char *argv[]) {
 	def_options(&options);
 	get_options(&options,argc,argv);
 	show_options(&options);
+
+	if (options.bspf_name == NULL) {
+		fprintf(stderr, "No BSP file was provided.\n");
+		return 1;
+	}
+
     /* Create Output file name if it is not provided */
     if(options.outf_name ==  NULL)
     {
