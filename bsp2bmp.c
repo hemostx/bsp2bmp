@@ -136,6 +136,7 @@ typedef unsigned char eightbit;
 typedef struct options_t {
 	char	*bspf_name;
 	char	*outf_name;
+	char    *json_name;
 
 	float	 scaledown;
 	float	 z_pad;
@@ -155,6 +156,8 @@ typedef struct options_t {
 
 	int	 write_raw;
 	int	 write_nocomp;
+
+	int  write_json;
 } options_t;
 
 typedef struct bmp_infoheader_t {
@@ -226,6 +229,10 @@ void show_help() {
 	stdprintf("    -n                negative image (black on white\n");
 	stdprintf("    -r                write raw data, rather than bmp file\n");
 	stdprintf("    -q                quiet output\n");
+	stdprintf("    -j                output measurements in json\n");
+	stdprintf("                      0-no json, output image only\n");
+	stdprintf("                      1-json alongside regular output\n");
+	stdprintf("                      2-json only\n");
 	// stdprintf("    -u                write uncompressed bmp\n");
 	stdprintf("\n");
 	stdprintf("If [outfile] is omitted, then program will create .bmp file in the same directory as .bsp file.\n");
@@ -322,6 +329,7 @@ void def_options(struct options_t *opt) {
 
 	locopt.bspf_name = NULL;
 	locopt.outf_name = NULL;
+	locopt.json_name = NULL;
 
 	locopt.scaledown = 4.0;
 	locopt.image_pad = 16.0;
@@ -339,6 +347,8 @@ void def_options(struct options_t *opt) {
 
 	locopt.write_raw = 0;
 	locopt.write_nocomp = 1;
+
+	locopt.write_json = 0;
 
 	memcpy(opt, &locopt, sizeof(struct options_t));
 	return;
@@ -478,7 +488,19 @@ void get_options(struct options_t *opt, int argc, char *argv[]) {
 				case 'u':
 					locopt.write_nocomp = 1;
 					break;
-				
+				case 'j':
+					if (sscanf(&arg[2], "%d", &lnum) == 1) {
+						if (lnum >= 0) {
+							locopt.write_json = (int)lnum;
+							break;
+						}
+					}
+					else {
+						stdprintf("Must specify j0/1/2.\n");
+						show_help();
+						exit(1);
+						break;
+					}
 				default:
 					stdprintf("Unknown option: -%s\n",&arg[1]);
 					show_help();
@@ -587,6 +609,10 @@ void show_options(struct options_t *opt)
 	else
 		stdprintf("  Output (%s bmp) file: %s\n\n",opt->write_nocomp ? "uncompressed" : "RLE compressed" ,opt->outf_name);
 
+	if (opt->write_json) {
+		stdprintf("  Outputting measurements to JSON%s.\n\n", opt->write_json == 1 ? " along output image" : " only");
+	}
+
 	return;
 }
 
@@ -595,6 +621,7 @@ void show_options(struct options_t *opt)
 int main(int argc, char *argv[]) {
 	FILE                 *bspfile=NULL;
 	FILE                 *outfile=NULL;
+	FILE                 *jsonFile = NULL;
 	int32_t                  i=0, j=0, k=0, x=0;
 	int32_t                  pad=0x00000000;
 	struct dheader_t      bsp_header;
@@ -654,6 +681,21 @@ int main(int argc, char *argv[]) {
 	if (bspfile == NULL) {
 		fprintf(stderr,"Error opening bsp file %s.\n",options.bspf_name);
 		return 1;
+	}
+	
+	if (options.write_json > 0)
+	{
+		if (options.outf_name == NULL)
+		{
+			options.json_name = calloc(sizeof(options.bspf_name) + 1, sizeof(options.bspf_name) + 1);
+			strncpy(options.json_name, options.bspf_name, strlen(options.bspf_name) - 3);
+		}
+		else {
+			options.json_name = calloc(sizeof(options.outf_name) + 1, sizeof(options.outf_name) + 1);
+			strncpy(options.json_name, options.outf_name, strlen(options.outf_name) - 3);
+		}
+		strcat(options.json_name, "json");
+		fprintf(stdout, "JSON filename: %s\n", options.json_name);
 	}
 
 	/* Read header */
@@ -1076,6 +1118,34 @@ maxX = maxY = maxZ = 4096;*/
 	//extra padding to prevent line intersection bleed from being cutoff with -p0
 	imagewidth  = (int32_t)((maxX - minX)/options.scaledown) + (options.image_pad*2) + 1 + (options.z_pad*2);
 	imageheight = (int32_t)((maxY - minY)/options.scaledown) + (options.image_pad*2) + 1 + (options.z_pad*2);
+
+	if (options.write_json) {
+		
+		jsonFile = fopen(options.json_name, "wb");
+		
+		if (jsonFile == NULL) {
+			fprintf(stderr, "\nError opening output JSON file %s.\n", options.json_name);
+			return 1;
+		}
+		
+		fprintf(jsonFile, "{\n\"minX\":%d,\n\"minY\":%d,\n\"width\":%d,\n\"height\":%d,\n\"imageWidth\":%d,\n\"imageHeight\":%d,\n\"padding\":%d,\n\"scaling\":%d\n}", (int)minX, (int)minY, (int)(maxX - minX), (int)(maxY - minY), imagewidth, imageheight, (int)options.image_pad, (int)options.scaledown);
+
+		fclose(jsonFile);
+		stdprintf("\nJSON file written to %s.\n", options.json_name);
+
+		if (options.write_json > 1) {
+			// early exit!
+			free(vertexlist);
+			free(edgelist);
+			free(ledges);
+			free(facelist);
+			if (options.edgeremove) {
+				free(edge_extra);
+			}
+			return 0;
+		}
+	}
+
 	if(!(image=malloc(sizeof(eightbit) * imagewidth * imageheight))) {
 		fprintf(stderr,"Error allocating image buffer %dx%d.\n",imagewidth,imageheight);
 		return 0;
