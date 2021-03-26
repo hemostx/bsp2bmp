@@ -21,4 +21,23 @@ Extraneous edge removal might be a little weird at times - might as well disable
 
 The full scale render may be a bit unwieldy, but much more comfortable to work with in whatever art pipeline you go for (you can always scale down later).
 
-If you also want to calculate the metadata for ezQuake, you can dump it by adding `-j1` in the options, or `-j2` if you only want the numbers and don't need the image drawn again.
+If you also want to calculate the metadata for ezQuake, you can dump the map's measurements and padding/scaling options by adding `-j1` in the options, or `-j2` if you only want the numbers and don't need the image drawn again.
+
+# JSON data format
+
+The ezQuake radar images are tagged with some custom metadata specifying the map's origin coordinates and width/height scaling ratios.
+This metadata can be calculated from some map and radar image measurements. The JSON data is a collection of integer values:
+
+- **minX** : integer the map's leftmost X coordinate, in map units.
+- **minY** : the map's topmost Y coordinate, in map units..
+- **width** : the map width, in map units.
+- **height** : the map's length, in map units. (we are looking down from above, so this isn't the actual Z height)
+- **imageWidth** : the generated image width in pixels.
+- **imageHeight** : the generated image height in pixels.
+- **padding** : the border in pixels (value of `-p`).
+- **scaling** : the scaling factor of the image, units per pixel (value of `-s`, default is 4, i.e 1/4 scale).
+
+Keep in mind that due to the way bsp2bmp does its drawing (numbering starts at 0, 1 pixel line thickness), the overall image dimension is 1px wider than simply `padding + (map dimension* scaling ) + padding`.
+![readme-pixel-size](readme-pixel-size.png)
+
+This bsp block of 24x24 units (selection) is drawn in 25x25px (white lines).
