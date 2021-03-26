@@ -229,10 +229,11 @@ void show_help() {
 	stdprintf("    -n                negative image (black on white\n");
 	stdprintf("    -r                write raw data, rather than bmp file\n");
 	stdprintf("    -q                quiet output\n");
-	stdprintf("    -j                output measurements in json\n");
-	stdprintf("                      0-no json, output image only\n");
-	stdprintf("                      1-json alongside regular output\n");
-	stdprintf("                      2-json only\n");
+	stdprintf("    -j<json>          output measurements in a JSON file:\n");
+	stdprintf("                       0-no JSON, output image only\n");
+	stdprintf("                       1-JSON alongside regular output\n");
+	stdprintf("                       2-JSON output only\n");
+	stdprintf("                      This file is named after [outfile] or the .bsp.\n");
 	// stdprintf("    -u                write uncompressed bmp\n");
 	stdprintf("\n");
 	stdprintf("If [outfile] is omitted, then program will create .bmp file in the same directory as .bsp file.\n");
