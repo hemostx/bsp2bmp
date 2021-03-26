@@ -1135,7 +1135,7 @@ maxX = maxY = maxZ = 4096;*/
 			return 1;
 		}
 		
-		fprintf(jsonFile, "{\n\"minX\":%d,\n\"minY\":%d,\n\"width\":%d,\n\"height\":%d,\n\"imageWidth\":%d,\n\"imageHeight\":%d,\n\"padding\":%d,\n\"scaling\":%d\n}", (int)minX, (int)minY, (int)(maxX - minX), (int)(maxY - minY), imagewidth, imageheight, (int)options.image_pad, (int)options.scaledown);
+		fprintf(jsonFile, "{\n\"bspName\":\"%s\",\n\"minX\":%d,\n\"minY\":%d,\n\"width\":%d,\n\"height\":%d,\n\"imageWidth\":%d,\n\"imageHeight\":%d,\n\"padding\":%d,\n\"scaling\":%d\n}", options.bspf_name, (int)minX, (int)minY, (int)(maxX - minX), (int)(maxY - minY), imagewidth, imageheight, (int)options.image_pad, (int)options.scaledown);
 
 		fclose(jsonFile);
 		stdprintf("\nJSON file written to %s.\n", options.json_name);

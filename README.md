@@ -37,6 +37,8 @@ This metadata can be calculated from some map and radar image measurements. The 
 - **padding** : the border in pixels (value of `-p`).
 - **scaling** : the scaling factor of the image, units per pixel (value of `-s`, default is 4, i.e 1/4 scale).
 
+_Note: the bsp file name/path is also included as `bspName`. This is not strictly needed, but useful to keep track of things when juggling many files and copies._
+
 Keep in mind that due to the way bsp2bmp does its drawing (numbering starts at 0, 1 pixel line thickness), the overall image dimension is 1px wider than simply `padding + (map dimension* scaling ) + padding`.
 ![readme-pixel-size](readme-pixel-size.png)
 
