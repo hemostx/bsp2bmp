@@ -51,6 +51,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #endif
 
+#ifdef WINVS
+#define strdup _strdup
+#endif
+
+
 /*
 Thanks fly to Id for a hackable game! :)
 
@@ -1125,15 +1130,25 @@ maxX = maxY = maxZ = 4096;*/
 	imageheight = (int32_t)((maxY - minY)/options.scaledown) + (options.image_pad*2) + 1 + (options.z_pad*2);
 
 	if (options.write_json) {
-		
+
 		jsonFile = fopen(options.json_name, "wb");
-		
+
 		if (jsonFile == NULL) {
 			fprintf(stderr, "\nError opening output JSON file %s.\n", options.json_name);
 			return 1;
 		}
-		
-		fprintf(jsonFile, "{\n\"bspName\":\"%s\",\n\"minX\":%d,\n\"minY\":%d,\n\"width\":%d,\n\"height\":%d,\n\"imageWidth\":%d,\n\"imageHeight\":%d,\n\"padding\":%d,\n\"scaling\":%d\n}", options.bspf_name, (int)minX, (int)minY, (int)(maxX - minX), (int)(maxY - minY), imagewidth, imageheight, (int)options.image_pad, (int)options.scaledown);
+
+		//for windows, replace potential backslashes in base path for valid JSON output
+		char *tPath = strdup(options.bspf_name);
+		int c = 0;
+		while (tPath[c] != '\0') {
+			if (tPath[c] == '\\') {
+				tPath[c] = '/';
+			}
+			c++;
+		}
+
+		fprintf(jsonFile, "{\n\"bspName\":\"%s\",\n\"minX\":%d,\n\"minY\":%d,\n\"width\":%d,\n\"height\":%d,\n\"imageWidth\":%d,\n\"imageHeight\":%d,\n\"padding\":%d,\n\"scaling\":%d\n}", tPath, (int)minX, (int)minY, (int)(maxX - minX), (int)(maxY - minY), imagewidth, imageheight, (int)options.image_pad, (int)options.scaledown);
 
 		fclose(jsonFile);
 		stdprintf("\nJSON file written to %s.\n", options.json_name);
